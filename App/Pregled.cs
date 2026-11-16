@@ -15,8 +15,8 @@ public sealed class Pregled : Control
     bool _prikaziPecat;
     Point? _pocetak;
     Rectangle _povlacenje;
-    public string ImePecat { get; set; } = "Ime Prezime";
-    public string Poruka { get; set; } = "Izaberi PDF iz liste";
+    public string ImePecat { get; set; } = Jezik.T("Ime Prezime", "First Last");
+    public string Poruka { get; set; } = Jezik.T("Izaberi PDF iz liste", "Select a PDF from the list");
     /// <summary>Samo okvir (bez teksta) — npr. kad dokument već ima pečat.</summary>
     public bool SamoOkvir { get; set; }
 

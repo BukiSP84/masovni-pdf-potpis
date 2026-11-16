@@ -9,6 +9,8 @@ public sealed class RezultatFajla
     public string HashPrije { get; set; } = "";
     public string HashPoslije { get; set; } = "";
     public DateTime? VremenskiZig { get; set; }
+    /// <summary>Greška tokena ili vremenskog žiga — nema smisla nastavljati s ostalim fajlovima.</summary>
+    public bool Prekini { get; set; }
 }
 
 /// <summary>Pronalaženje PDF-ova i masovno potpisivanje s provjerom rezultata.</summary>
@@ -45,7 +47,7 @@ public static class Obrada
         {
             var prije = Provjera.Analiziraj(putanja);
             if (prije.Status == StatusDokumenta.Greska)
-                throw new Exception("PDF se ne može pročitati: " + prije.Greska);
+                throw new Exception(Jezik.T("PDF se ne može pročitati: ", "PDF cannot be read: ") + prije.Greska);
 
             rez.HashPrije = Sha256(putanja);
             var opFajl = op;
@@ -54,7 +56,7 @@ public static class Obrada
                 // u već potpisan PDF ne dodajemo stranicu (Adobe bi to javio kao izmjenu)
                 opFajl = op.Kopija();
                 opFajl.Mjesto = MjestoPecata.ZadnjaStranica;
-                rez.Poruka = "već potpisan: pečat na zadnjoj stranici, bez nove stranice. ";
+                rez.Poruka = Jezik.T("već potpisan: pečat na zadnjoj stranici, bez nove stranice. ", "already signed: stamp on the last page, no new page. ");
             }
 
             Potpisnik.Potpisi(putanja, tmp, potpis, ime, opFajl, lanac);
@@ -64,11 +66,11 @@ public static class Obrada
             var novi = poslije.Potpisi.LastOrDefault();
             if (poslije.Status != StatusDokumenta.Potpisan || novi == null || !novi.Ispravan || !novi.PokrivaCijeliDokument
                 || poslije.Potpisi.Count != prije.Potpisi.Count + 1)
-                throw new Exception("provjera potpisanog fajla nije prošla (" + poslije.StatusTekst + ")");
+                throw new Exception(Jezik.T("provjera potpisanog fajla nije prošla (", "verification of the signed file failed (") + poslije.StatusTekst + ")");
             if (prije.Potpisi.Count > 0 && poslije.Potpisi.Take(prije.Potpisi.Count).Any(p => !p.Ispravan))
-                throw new Exception("raniji potpis bi postao neispravan");
+                throw new Exception(Jezik.T("raniji potpis bi postao neispravan", "an earlier signature would become invalid"));
             if (!string.IsNullOrWhiteSpace(op.TsaUrl) && (novi.VremenskiZig == null || !novi.VremenskiZigIspravan))
-                throw new Exception("vremenski žig nije ispravno ugrađen");
+                throw new Exception(Jezik.T("vremenski žig nije ispravno ugrađen", "the time-stamp was not embedded correctly"));
             rez.HashPoslije = Sha256(tmp);
             rez.VremenskiZig = novi.VremenskiZig;
 
@@ -89,18 +91,26 @@ public static class Obrada
                 File.Copy(tmp, cilj, true);
             }
             rez.Uspjeh = true;
-            rez.Poruka += "potpisano";
+            rez.Poruka += Jezik.T("potpisano", "signed");
         }
         catch (Exception ex)
         {
             rez.Uspjeh = false;
-            rez.Poruka = Poruka(ex) + " — original nije diran";
+            rez.Poruka = Poruka(ex) + Jezik.T(" — original nije diran", " — original left untouched");
+            rez.Prekini = Prekid(ex);
         }
         finally
         {
             try { if (File.Exists(tmp)) File.Delete(tmp); } catch { }
         }
         return rez;
+    }
+
+    static bool Prekid(Exception ex)
+    {
+        for (var x = ex; x != null; x = x.InnerException)
+            if (x is VremenskiZigException || x is System.Security.Cryptography.CryptographicException) return true;
+        return false;
     }
 
     public static string Sha256(string putanja)
@@ -116,7 +126,7 @@ public static class Obrada
         var e = ex;
         while (e.InnerException != null) e = e.InnerException;
         if (e is System.Security.Cryptography.CryptographicException)
-            return "certifikat/token: " + e.Message + " (je li token utaknut i PIN ispravan?)";
+            return Jezik.T("certifikat/token: ", "certificate/token: ") + e.Message + Jezik.T(" (je li token utaknut i PIN ispravan?)", " (is the token plugged in and the PIN correct?)");
         return e.Message;
     }
 }

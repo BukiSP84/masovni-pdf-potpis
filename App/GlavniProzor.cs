@@ -1,5 +1,6 @@
 using System.Security.Cryptography.X509Certificates;
 using MasovniPdfPotpis.Core;
+using static MasovniPdfPotpis.Core.Jezik;
 
 namespace MasovniPdfPotpis;
 
@@ -12,9 +13,9 @@ public sealed class GlavniProzor : Form
 
     // kontrole
     readonly TextBox txtFolder = new() { ReadOnly = true, Width = 520 };
-    readonly Button btnFolder = new() { Text = "Izaberi folder…", AutoSize = true };
-    readonly Button btnOsvjezi = new() { Text = "Osvježi", AutoSize = true };
-    readonly CheckBox chkPodfolderi = new() { Text = "S podfolderima", AutoSize = true, Margin = new Padding(12, 6, 3, 3) };
+    readonly Button btnFolder = new() { Text = T("Izaberi folder…", "Choose folder…"), AutoSize = true };
+    readonly Button btnOsvjezi = new() { Text = T("Osvježi", "Refresh"), AutoSize = true };
+    readonly CheckBox chkPodfolderi = new() { Text = T("S podfolderima", "Include subfolders"), AutoSize = true, Margin = new Padding(12, 6, 3, 3) };
 
     readonly DataGridView grid = new();
     readonly TextBox txtDetalji = new() { Multiline = true, ReadOnly = true, ScrollBars = ScrollBars.Vertical, Dock = DockStyle.Fill, Font = new Font("Consolas", 9f) };
@@ -24,21 +25,22 @@ public sealed class GlavniProzor : Form
     readonly Button btnSljedeca = new() { Text = ">", Width = 36 };
     readonly Label lblStranica = new() { AutoSize = true, Margin = new Padding(6, 8, 6, 3) };
     readonly ComboBox cmbMjesto = new() { DropDownStyle = ComboBoxStyle.DropDownList, Width = 170 };
-    readonly Button btnZadano = new() { Text = "Zadana pozicija", AutoSize = true };
+    readonly Button btnZadano = new() { Text = T("Zadana pozicija", "Default position"), AutoSize = true };
     readonly Label lblPomoc = new() { AutoSize = true, ForeColor = Color.DimGray, Margin = new Padding(6, 8, 3, 3),
-        Text = "Klik ili povlačenje mišem na stranici = mjesto pečata (pamti se)" };
+        Text = T("Klik ili povlačenje mišem na stranici = mjesto pečata (pamti se)", "Click or drag on the page = stamp position (remembered)") };
 
     readonly ComboBox cmbCert = new() { DropDownStyle = ComboBoxStyle.DropDownList, Width = 520 };
     readonly ComboBox cmbSpremanje = new() { DropDownStyle = ComboBoxStyle.DropDownList, Width = 260 };
-    readonly Button btnNepotpisani = new() { Text = "Označi nepotpisane", AutoSize = true };
-    readonly Button btnPotpisi = new() { Text = "Potpiši označene", AutoSize = true, Font = new Font(Control.DefaultFont, FontStyle.Bold) };
-    readonly Button btnStop = new() { Text = "Zaustavi", AutoSize = true, Enabled = false };
+    readonly Button btnNepotpisani = new() { Text = T("Označi nepotpisane", "Select unsigned"), AutoSize = true };
+    readonly Button btnPotpisi = new() { Text = T("Potpiši označene", "Sign selected"), AutoSize = true, Font = new Font(Control.DefaultFont, FontStyle.Bold) };
+    readonly Button btnStop = new() { Text = T("Zaustavi", "Stop"), AutoSize = true, Enabled = false };
     readonly ProgressBar progres = new() { Width = 260, Height = 20 };
     readonly Label lblStatus = new() { AutoSize = true, Margin = new Padding(6, 8, 3, 3) };
-    readonly CheckBox chkTsa = new() { Text = "Vremenski žig:", AutoSize = true, Margin = new Padding(12, 6, 0, 3) };
+    readonly CheckBox chkTsa = new() { Text = T("Vremenski žig:", "Time-stamp:"), AutoSize = true, Margin = new Padding(12, 6, 0, 3) };
     readonly TextBox txtTsa = new() { Width = 210, Margin = new Padding(0, 4, 3, 3) };
     readonly ToolTip savjet = new() { AutoPopDelay = 20000 };
-    readonly LinkLabel lnkOApp = new() { Text = "O aplikaciji", AutoSize = true, Margin = new Padding(12, 8, 3, 3) };
+    readonly ComboBox cmbJezik = new() { DropDownStyle = ComboBoxStyle.DropDownList, Width = 140, Margin = new Padding(3, 4, 3, 3) };
+    readonly LinkLabel lnkOApp = new() { Text = T("O aplikaciji", "About"), AutoSize = true, Margin = new Padding(12, 8, 3, 3) };
     public const string IzvorniKodUrl = "https://github.com/BukiSP84/masovni-pdf-potpis";
 
     string _pregledPutanja;       // fajl koji se prikazuje
@@ -48,7 +50,7 @@ public sealed class GlavniProzor : Form
 
     public GlavniProzor()
     {
-        Text = "Masovni PDF Potpis " + Application.ProductVersion.Split('+')[0] + " — digitalno potpisivanje PDF-ova";
+        Text = "Masovni PDF Potpis " + Application.ProductVersion.Split('+')[0] + T(" — digitalno potpisivanje PDF-ova", " — bulk digital signing of PDFs");
         Width = 1400; Height = 860;
         StartPosition = FormStartPosition.CenterScreen;
         Font = new Font("Segoe UI", 9f);
@@ -56,21 +58,22 @@ public sealed class GlavniProzor : Form
 
         // --- gornja traka
         var gore = new FlowLayoutPanel { Dock = DockStyle.Top, AutoSize = true, Padding = new Padding(6), WrapContents = false };
-        gore.Controls.AddRange(new Control[] { new Label { Text = "Folder:", AutoSize = true, Margin = new Padding(3, 8, 3, 3) },
-            txtFolder, btnFolder, btnOsvjezi, chkPodfolderi });
+        gore.Controls.AddRange(new Control[] { new Label { Text = T("Folder:", "Folder:"), AutoSize = true, Margin = new Padding(3, 8, 3, 3) },
+            txtFolder, btnFolder, btnOsvjezi, chkPodfolderi,
+            new Label { Text = T("Jezik:", "Language:"), AutoSize = true, Margin = new Padding(24, 8, 3, 3) }, cmbJezik });
 
         // --- tabela
         PripremiTabelu();
         var lijevo = new SplitContainer { Dock = DockStyle.Fill, Orientation = Orientation.Horizontal };
         lijevo.Panel1.Controls.Add(grid);
-        var grpDetalji = new GroupBox { Text = "Potpisi u izabranom dokumentu", Dock = DockStyle.Fill };
+        var grpDetalji = new GroupBox { Text = T("Potpisi u izabranom dokumentu", "Signatures in the selected document"), Dock = DockStyle.Fill };
         grpDetalji.Controls.Add(txtDetalji);
         lijevo.Panel2.Controls.Add(grpDetalji);
 
         // --- pregled
         var traka = new FlowLayoutPanel { Dock = DockStyle.Top, AutoSize = true, WrapContents = true };
         traka.Controls.AddRange(new Control[] { btnPrethodna, lblStranica, btnSljedeca,
-            new Label { Text = "Pečat na:", AutoSize = true, Margin = new Padding(12, 8, 3, 3) }, cmbMjesto, btnZadano, lblPomoc });
+            new Label { Text = T("Pečat na:", "Stamp on:"), AutoSize = true, Margin = new Padding(12, 8, 3, 3) }, cmbMjesto, btnZadano, lblPomoc });
         var desno = new Panel { Dock = DockStyle.Fill };
         desno.Controls.Add(pregled);
         desno.Controls.Add(traka);
@@ -82,24 +85,39 @@ public sealed class GlavniProzor : Form
         // --- donja traka
         var dole = new FlowLayoutPanel { Dock = DockStyle.Bottom, AutoSize = true, Padding = new Padding(6), WrapContents = true };
         dole.Controls.AddRange(new Control[] {
-            new Label { Text = "Certifikat:", AutoSize = true, Margin = new Padding(3, 8, 3, 3) }, cmbCert,
-            new Label { Text = "Spremanje:", AutoSize = true, Margin = new Padding(12, 8, 3, 3) }, cmbSpremanje,
+            new Label { Text = T("Certifikat:", "Certificate:"), AutoSize = true, Margin = new Padding(3, 8, 3, 3) }, cmbCert,
+            new Label { Text = T("Spremanje:", "Saving:"), AutoSize = true, Margin = new Padding(12, 8, 3, 3) }, cmbSpremanje,
             chkTsa, txtTsa, btnNepotpisani, btnPotpisi, btnStop, progres, lblStatus, lnkOApp });
-        savjet.SetToolTip(chkTsa, "Dodaje vremenski žig (RFC 3161) i podatak o statusu certifikata (OCSP).\n" +
+        savjet.SetToolTip(chkTsa, T("Dodaje vremenski žig (RFC 3161) i podatak o statusu certifikata (OCSP).\n" +
             "Dokazuje vrijeme potpisa nezavisno od sata računara i produžava provjerljivost potpisa.\n" +
-            "Traži internet; šalje se samo otisak (hash) dokumenta, ne sam dokument.");
-        savjet.SetToolTip(txtTsa, "Adresa servisa za vremenski žig. Zadano: " + Postavke.ZadaniTsa +
-            " (besplatan, javni).\nAko vaš izdavač certifikata nudi kvalifikovani vremenski žig, upišite njegovu adresu.");
+            "Traži internet; šalje se samo otisak (hash) dokumenta, ne sam dokument.",
+            "Adds an RFC 3161 time-stamp and certificate status (OCSP).\n" +
+            "Proves the signing time independently of the computer clock and extends long-term verifiability.\n" +
+            "Requires internet; only a hash is sent, never the document itself."));
+        savjet.SetToolTip(txtTsa, T("Adresa servisa za vremenski žig. Zadano: ", "Time-stamp server address. Default: ") + Postavke.ZadaniTsa +
+            T(" (besplatan, javni).\nAko vaš izdavač certifikata nudi kvalifikovani vremenski žig, upišite njegovu adresu.",
+              " (free, public).\nIf your certificate issuer offers a qualified time-stamp service, enter its address."));
 
         Controls.Add(glavni);
         Controls.Add(dole);
         Controls.Add(gore);
 
-        cmbMjesto.Items.AddRange(new object[] { "Zadnja stranica", "Prva stranica", "Nova stranica na kraju" });
-        cmbSpremanje.Items.AddRange(new object[] { "Zamijeni original (backup u _backup)", "Kopija u podfolder _potpisano" });
+        cmbMjesto.Items.AddRange(new object[] { T("Zadnja stranica", "Last page"), T("Prva stranica", "First page"), T("Nova stranica na kraju", "New page at the end") });
+        cmbSpremanje.Items.AddRange(new object[] { T("Zamijeni original (backup u _backup)", "Replace original (backup in _backup)"), T("Kopija u podfolder _potpisano", "Copy to subfolder _potpisano") });
         cmbMjesto.SelectedIndex = (int)_post.Mjesto;
         cmbSpremanje.SelectedIndex = (int)_post.Spremanje;
         chkPodfolderi.Checked = _post.Rekurzivno;
+        cmbJezik.Items.AddRange(new object[] { T("Automatski", "Automatic"), "Bosanski / Hrvatski / Srpski", "English" });
+        cmbJezik.SelectedIndex = _post.Jezik switch { "bs" => 1, "en" => 2, _ => 0 };
+        cmbJezik.DropDownWidth = 200;
+        cmbJezik.SelectedIndexChanged += (_, _) =>
+        {
+            string novi = cmbJezik.SelectedIndex switch { 1 => "bs", 2 => "en", _ => "" };
+            if (novi == _post.Jezik) return;
+            _post.Jezik = novi; _post.Sacuvaj();
+            MessageBox.Show(this, "Jezik će se promijeniti kad ponovo pokreneš aplikaciju.\nThe language will change when you restart the app.",
+                "Masovni PDF Potpis", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        };
         chkTsa.Checked = _post.VremenskiZig;
         txtTsa.Text = string.IsNullOrWhiteSpace(_post.TsaUrl) ? Postavke.ZadaniTsa : _post.TsaUrl;
         txtTsa.Enabled = chkTsa.Checked;
@@ -134,7 +152,7 @@ public sealed class GlavniProzor : Form
         {
             if (_post.Mjesto == MjestoPecata.NovaStranica) _post.PecatNovaStranica = p; else _post.Pecat = p;
             _post.Sacuvaj();
-            lblStatus.Text = $"Pozicija pečata zapamćena: x={p.X:0}, y={p.Y:0}, {p.Sirina:0}×{p.Visina:0} pt";
+            lblStatus.Text = T("Pozicija pečata zapamćena", "Stamp position saved") + $": x={p.X:0}, y={p.Y:0}, {p.Sirina:0}×{p.Visina:0} pt";
         };
         btnNepotpisani.Click += (_, _) => OznaciNepotpisane();
         btnPotpisi.Click += async (_, _) => await PotpisiOznacene();
@@ -160,12 +178,12 @@ public sealed class GlavniProzor : Form
             if (fill) k.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
             grid.Columns.Add(k);
         }
-        Kol("fajl", "Fajl", 300, true);
+        Kol("fajl", T("Fajl", "File"), 300, true);
         Kol("status", "Status", 150);
-        Kol("pecat", "Pečat", 50);
-        Kol("potpisnik", "Potpisnik", 120);
-        Kol("datum", "Datum potpisa", 115);
-        Kol("cert", "Certifikat", 100);
+        Kol("pecat", T("Pečat", "Stamp"), 50);
+        Kol("potpisnik", T("Potpisnik", "Signer"), 120);
+        Kol("datum", T("Datum potpisa", "Signed on"), 115);
+        Kol("cert", T("Certifikat", "Certificate"), 100);
     }
 
     void PopuniRed(int i)
@@ -175,10 +193,10 @@ public sealed class GlavniProzor : Form
         var zadnji = d.Potpisi.LastOrDefault();
         red.Cells["fajl"].Value = Path.GetRelativePath(txtFolder.Text, d.Putanja);
         red.Cells["status"].Value = d.StatusTekst;
-        red.Cells["pecat"].Value = d.Potpisi.Count == 0 ? "" : d.ImaPecat ? "Da" : "Ne";
+        red.Cells["pecat"].Value = d.Potpisi.Count == 0 ? "" : d.ImaPecat ? T("Da", "Yes") : T("Ne", "No");
         red.Cells["potpisnik"].Value = zadnji?.Potpisnik ?? "";
         red.Cells["datum"].Value = zadnji?.Datum?.ToString("dd.MM.yyyy HH:mm") ?? "";
-        red.Cells["cert"].Value = zadnji == null ? "" : zadnji.ZaPotpisivanje ? "potpisni" : "NIJE potpisni";
+        red.Cells["cert"].Value = zadnji == null ? "" : zadnji.ZaPotpisivanje ? T("potpisni", "signing") : T("NIJE potpisni", "NOT signing");
 
         Color boja = d.Status switch
         {
@@ -194,7 +212,7 @@ public sealed class GlavniProzor : Form
     void AzurirajDugme()
     {
         int n = grid.Rows.Cast<DataGridViewRow>().Count(r => r.Cells["c"].Value is true);
-        btnPotpisi.Text = $"Potpiši označene ({n})";
+        btnPotpisi.Text = T("Potpiši označene", "Sign selected") + $" ({n})";
         btnPotpisi.Enabled = n > 0 && _otkazi == null;
     }
 
@@ -208,7 +226,7 @@ public sealed class GlavniProzor : Form
     // ------------------------------------------------------------------ folder
     void IzaberiFolder()
     {
-        using var dlg = new FolderBrowserDialog { Description = "Izaberi folder s PDF dokumentima", UseDescriptionForTitle = true };
+        using var dlg = new FolderBrowserDialog { Description = T("Izaberi folder s PDF dokumentima", "Choose a folder with PDF documents"), UseDescriptionForTitle = true };
         if (Directory.Exists(_post.ZadnjiFolder)) dlg.InitialDirectory = _post.ZadnjiFolder;
         if (dlg.ShowDialog(this) == DialogResult.OK) _ = UcitajFolder(dlg.SelectedPath);
     }
@@ -218,13 +236,13 @@ public sealed class GlavniProzor : Form
         txtFolder.Text = folder;
         _post.ZadnjiFolder = folder; _post.Sacuvaj();
         grid.Rows.Clear(); _dokumenti.Clear();
-        txtDetalji.Clear(); pregled.Ocisti("Učitavam…");
+        txtDetalji.Clear(); pregled.Ocisti(T("Učitavam…", "Loading…"));
         btnOsvjezi.Enabled = btnFolder.Enabled = false;
         try
         {
             var fajlovi = await Task.Run(() => Obrada.NadjiPdf(folder, chkPodfolderi.Checked));
             progres.Maximum = Math.Max(1, fajlovi.Count); progres.Value = 0;
-            lblStatus.Text = $"Provjeravam {fajlovi.Count} PDF-ova…";
+            lblStatus.Text = T($"Provjeravam {fajlovi.Count} PDF-ova…", $"Checking {fajlovi.Count} PDFs…");
             var rezultati = await Task.Run(() =>
             {
                 var l = new InfoDokumenta[fajlovi.Count];
@@ -248,14 +266,15 @@ public sealed class GlavniProzor : Form
             int nep = _dokumenti.Count(d => d.Status == StatusDokumenta.Nepotpisan);
             int bezPecata = _dokumenti.Count(d => d.Potpisi.Count > 0 && !d.ImaPecat);
             int problem = _dokumenti.Count(d => d.Status is StatusDokumenta.Neispravan or StatusDokumenta.PotpisanMijenjanPoslije or StatusDokumenta.Greska);
-            lblStatus.Text = $"{_dokumenti.Count} PDF-ova: {nep} nepotpisanih, {_dokumenti.Count - nep} potpisanih ({bezPecata} bez pečata)" +
-                             (problem > 0 ? $", {problem} s problemom" : "");
-            if (_dokumenti.Count == 0) pregled.Ocisti("U ovom folderu nema PDF-ova.");
+            lblStatus.Text = T($"{_dokumenti.Count} PDF-ova: {nep} nepotpisanih, {_dokumenti.Count - nep} potpisanih ({bezPecata} bez pečata)",
+                               $"{_dokumenti.Count} PDFs: {nep} unsigned, {_dokumenti.Count - nep} signed ({bezPecata} without stamp)") +
+                             (problem > 0 ? T($", {problem} s problemom", $", {problem} with problems") : "");
+            if (_dokumenti.Count == 0) pregled.Ocisti(T("U ovom folderu nema PDF-ova.", "There are no PDFs in this folder."));
             else { grid.ClearSelection(); grid.Rows[0].Selected = true; PrikaziIzabrani(); }
         }
         catch (Exception ex)
         {
-            MessageBox.Show(this, ex.Message, "Greška", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            MessageBox.Show(this, ex.Message, T("Greška", "Error"), MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
         finally
         {
@@ -279,26 +298,26 @@ public sealed class GlavniProzor : Form
     static string OpisDetalja(InfoDokumenta d)
     {
         var sb = new System.Text.StringBuilder();
-        sb.AppendLine(Path.GetFileName(d.Putanja) + $"   ({d.BrojStranica} str.)");
+        sb.AppendLine(Path.GetFileName(d.Putanja) + $"   ({d.BrojStranica} {T("str.", "p.")})");
         sb.AppendLine("Status: " + d.StatusTekst);
-        if (d.Status == StatusDokumenta.Greska) sb.AppendLine("Greška: " + d.Greska);
+        if (d.Status == StatusDokumenta.Greska) sb.AppendLine(T("Greška: ", "Error: ") + d.Greska);
         if (d.Status == StatusDokumenta.PotpisanMijenjanPoslije)
-            sb.AppendLine("PAŽNJA: dokument je mijenjan nakon zadnjeg potpisa.");
+            sb.AppendLine(T("PAŽNJA: dokument je mijenjan nakon zadnjeg potpisa.", "WARNING: the document was modified after the last signature."));
         int n = 1;
         foreach (var p in d.Potpisi)
         {
             sb.AppendLine();
-            sb.AppendLine($"Potpis {n++}  ({p.NazivPolja})");
-            sb.AppendLine($"  Potpisao:     {p.Potpisnik}");
-            sb.AppendLine($"  Izdavač:      {p.Izdavac}");
-            sb.AppendLine($"  Datum:        {p.Datum:dd.MM.yyyy HH:mm:ss}");
-            sb.AppendLine($"  Ispravan:     {(p.Ispravan ? "DA — sadržaj nije mijenjan od potpisa" : "NE — " + p.Greska)}");
-            sb.AppendLine($"  Certifikat:   {(p.ZaPotpisivanje ? "potpisni (NonRepudiation)" : "NIJE potpisni: " + p.NamjenaKljuca)}");
-            sb.AppendLine($"  Thumbprint:   {p.Thumbprint}");
-            if (p.CertVaziDo != null) sb.AppendLine($"  Važi do:      {p.CertVaziDo:dd.MM.yyyy}");
-            sb.AppendLine($"  Pečat:        {(p.Vidljiv ? "vidljiv, stranica " + p.Stranica : "nevidljiv potpis")}");
-            sb.AppendLine($"  Vrem. žig:    {(p.VremenskiZig == null ? "nema (vrijeme je sa računara potpisnika)" : $"{p.VremenskiZig:dd.MM.yyyy HH:mm:ss}" + (p.VremenskiZigIspravan ? " — ispravan" : " — NEISPRAVAN"))}");
-            if (p.ImaOcsp) sb.AppendLine("  Status cert.: ugrađen OCSP odgovor");
+            sb.AppendLine($"{T("Potpis", "Signature")} {n++}  ({p.NazivPolja})");
+            sb.AppendLine(T("  Potpisao:     ", "  Signed by:    ") + p.Potpisnik);
+            sb.AppendLine(T("  Izdavač:      ", "  Issuer:       ") + p.Izdavac);
+            sb.AppendLine(T("  Datum:        ", "  Date:         ") + $"{p.Datum:dd.MM.yyyy HH:mm:ss}");
+            sb.AppendLine(T("  Ispravan:     ", "  Valid:        ") + (p.Ispravan ? T("DA — sadržaj nije mijenjan od potpisa", "YES — content unchanged since signing") : T("NE — ", "NO — ") + p.Greska));
+            sb.AppendLine(T("  Certifikat:   ", "  Certificate:  ") + (p.ZaPotpisivanje ? T("potpisni (NonRepudiation)", "signing (NonRepudiation)") : T("NIJE potpisni: ", "NOT signing: ") + p.NamjenaKljuca));
+            sb.AppendLine("  Thumbprint:   " + p.Thumbprint);
+            if (p.CertVaziDo != null) sb.AppendLine(T("  Važi do:      ", "  Valid until:  ") + $"{p.CertVaziDo:dd.MM.yyyy}");
+            sb.AppendLine(T("  Pečat:        ", "  Stamp:        ") + (p.Vidljiv ? T("vidljiv, stranica ", "visible, page ") + p.Stranica : T("nevidljiv potpis", "invisible signature")));
+            sb.AppendLine(T("  Vrem. žig:    ", "  Time-stamp:   ") + (p.VremenskiZig == null ? T("nema (vrijeme je sa računara potpisnika)", "none (time from the signer's computer)") : $"{p.VremenskiZig:dd.MM.yyyy HH:mm:ss}" + (p.VremenskiZigIspravan ? T(" — ispravan", " — valid") : T(" — NEISPRAVAN", " — INVALID"))));
+            if (p.ImaOcsp) sb.AppendLine(T("  Status cert.: ugrađen OCSP odgovor", "  Cert status:  OCSP response embedded"));
         }
         return sb.ToString();
     }
@@ -321,7 +340,7 @@ public sealed class GlavniProzor : Form
         }
         catch (Exception ex)
         {
-            pregled.Ocisti("Ne mogu prikazati: " + ex.Message);
+            pregled.Ocisti(T("Ne mogu prikazati: ", "Cannot display: ") + ex.Message);
         }
     }
 
@@ -342,12 +361,12 @@ public sealed class GlavniProzor : Form
             pregled.ImePecat = ImeIzCertifikata();
             pregled.SamoOkvir = d?.ImaPecat == true;
             pregled.Postavi(bmp, w, h, pecat, ciljna);
-            lblPomoc.Text = ciljna ? "Klik ili povlačenje mišem na stranici = mjesto pečata (pamti se)"
-                                   : "Pečat ide na stranicu " + CiljnaStranica(d);
+            lblPomoc.Text = ciljna ? T("Klik ili povlačenje mišem na stranici = mjesto pečata (pamti se)", "Click or drag on the page = stamp position (remembered)")
+                                   : T("Pečat ide na stranicu ", "The stamp goes on page ") + CiljnaStranica(d);
         }
         catch (Exception ex)
         {
-            pregled.Ocisti("Ne mogu prikazati stranicu: " + ex.Message);
+            pregled.Ocisti(T("Ne mogu prikazati stranicu: ", "Cannot display page: ") + ex.Message);
         }
     }
 
@@ -383,7 +402,7 @@ public sealed class GlavniProzor : Form
         foreach (var c in _certifikati) cmbCert.Items.Add(Certifikati.Opis(c));
         if (_certifikati.Count == 0)
         {
-            cmbCert.Items.Add("Nema certifikata za potpis — je li token/kartica utaknut(a) i instaliran softver izdavača?");
+            cmbCert.Items.Add(T("Nema certifikata za potpis — je li token/kartica utaknut(a) i instaliran softver izdavača?", "No signing certificate — is the token/card plugged in and the issuer's software installed?"));
             cmbCert.SelectedIndex = 0;
             return;
         }
@@ -394,7 +413,7 @@ public sealed class GlavniProzor : Form
 
     X509Certificate2 IzabraniCert => cmbCert.SelectedIndex >= 0 && cmbCert.SelectedIndex < _certifikati.Count ? _certifikati[cmbCert.SelectedIndex] : null;
 
-    string ImeIzCertifikata() => IzabraniCert?.GetNameInfo(X509NameType.SimpleName, false) ?? "Ime Prezime";
+    string ImeIzCertifikata() => IzabraniCert?.GetNameInfo(X509NameType.SimpleName, false) ?? T("Ime Prezime", "First Last");
 
     void PromjenaCertifikata()
     {
@@ -402,25 +421,31 @@ public sealed class GlavniProzor : Form
         if (c == null) return;
         _post.CertifikatThumbprint = c.Thumbprint; _post.Sacuvaj();
         if (!Certifikati.JeZaPotpis(c))
-            lblStatus.Text = "Upozorenje: izabrani certifikat nije potpisni (nema NonRepudiation).";
+            lblStatus.Text = T("Upozorenje: izabrani certifikat nije potpisni (nema NonRepudiation).", "Warning: the selected certificate is not a signing certificate (no NonRepudiation).");
         pregled.ImePecat = ImeIzCertifikata(); pregled.Invalidate();
     }
 
     void OAplikaciji()
     {
         string tekst = $"Masovni PDF Potpis {Application.ProductVersion.Split('+')[0]}\n" +
-            "Masovno digitalno potpisivanje PDF dokumenata kvalifikovanim certifikatom.\n\n" +
-            "Licenca: GNU AGPL v3.0 — slobodan softver, bez ikakve garancije.\n" +
-            "Koristi: iText Core (AGPL), BouncyCastle (MIT), PDFtoImage/PDFium (MIT/BSD), SkiaSharp (MIT).\n\n" +
-            "Izvorni kod: " + IzvorniKodUrl + "\n\n" +
-            "Pravna napomena: aplikacija pravi elektronski potpis fizičkog lica (vlasnika certifikata), " +
-            "ne elektronski pečat firme. Potpisuj samo dokumente koje si pregledao/la. Nije namijenjena " +
-            "aktima koji traže notarsku/sudsku formu ili vlastoručni potpis. Da li primalac prihvata " +
-            "e-potpisan dokument, provjeri kod primaoca. Potpisane dokumente arhiviraj u elektronskom obliku.\n\n" +
-            "Font pečata: " + (string.IsNullOrEmpty(FontPecata.IzabraniFont) ? "(još nije korišten)" : FontPecata.IzabraniFont) + "\n" +
-            "Postavke: %APPDATA%\\MasovniPdfPotpis\\postavke.json\n\n" +
-            "Otvoriti stranicu s izvornim kodom?";
-        if (MessageBox.Show(this, tekst, "O aplikaciji", MessageBoxButtons.YesNo, MessageBoxIcon.Information) == DialogResult.Yes)
+            T("Masovno digitalno potpisivanje PDF dokumenata kvalifikovanim certifikatom.\n\n",
+              "Bulk digital signing of PDF documents with a qualified certificate.\n\n") +
+            T("Licenca: GNU AGPL v3.0 — slobodan softver, bez ikakve garancije.\n",
+              "License: GNU AGPL v3.0 — free software, without any warranty.\n") +
+            T("Koristi: ", "Uses: ") + "iText Core (AGPL), BouncyCastle (MIT), PDFtoImage/PDFium (MIT/BSD), SkiaSharp (MIT).\n\n" +
+            T("Izvorni kod: ", "Source code: ") + IzvorniKodUrl + "\n\n" +
+            T("Pravna napomena: aplikacija pravi elektronski potpis fizičkog lica (vlasnika certifikata), " +
+              "ne elektronski pečat firme. Potpisuj samo dokumente koje si pregledao/la. Nije namijenjena " +
+              "aktima koji traže notarsku/sudsku formu ili vlastoručni potpis. Da li primalac prihvata " +
+              "e-potpisan dokument, provjeri kod primaoca. Potpisane dokumente arhiviraj u elektronskom obliku.\n\n",
+              "Legal notice: the app creates an electronic signature of a natural person (the certificate holder), " +
+              "not a company e-seal. Only sign documents you have reviewed. Not intended for acts that require " +
+              "a notarial/court form or a handwritten signature. Check with the recipient whether they accept " +
+              "e-signed documents. Archive signed documents in electronic form.\n\n") +
+            T("Font pečata: ", "Stamp font: ") + (string.IsNullOrEmpty(FontPecata.IzabraniFont) ? T("(još nije korišten)", "(not used yet)") : FontPecata.IzabraniFont) + "\n" +
+            T("Postavke: ", "Settings: ") + "%APPDATA%\\MasovniPdfPotpis\\postavke.json\n\n" +
+            T("Otvoriti stranicu s izvornim kodom?", "Open the source code page?");
+        if (MessageBox.Show(this, tekst, T("O aplikaciji", "About"), MessageBoxButtons.YesNo, MessageBoxIcon.Information) == DialogResult.Yes)
             try { System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(IzvorniKodUrl) { UseShellExecute = true }); } catch { }
     }
 
@@ -428,19 +453,19 @@ public sealed class GlavniProzor : Form
     async Task PotpisiOznacene()
     {
         var cert = IzabraniCert;
-        if (cert == null) { MessageBox.Show(this, "Nije izabran certifikat.", "Masovni PDF Potpis"); return; }
+        if (cert == null) { MessageBox.Show(this, T("Nije izabran certifikat.", "No certificate selected."), "Masovni PDF Potpis"); return; }
         var indeksi = grid.Rows.Cast<DataGridViewRow>().Where(r => r.Cells["c"].Value is true).Select(r => r.Index).ToList();
         if (indeksi.Count == 0) return;
 
         int vecPotpisanih = indeksi.Count(i => _dokumenti[i].Potpisi.Count > 0);
-        string poruka = $"Potpisati {indeksi.Count} dokument(a) certifikatom:\n{Certifikati.Opis(cert)}\n\n" +
-            $"Pečat: {cmbMjesto.Text}\nSpremanje: {cmbSpremanje.Text}";
+        string poruka = T($"Potpisati {indeksi.Count} dokument(a) certifikatom:", $"Sign {indeksi.Count} document(s) with certificate:") + $"\n{Certifikati.Opis(cert)}\n\n" +
+            T("Pečat: ", "Stamp: ") + cmbMjesto.Text + "\n" + T("Spremanje: ", "Saving: ") + cmbSpremanje.Text;
         if (vecPotpisanih > 0)
-            poruka += $"\n\n{vecPotpisanih} od njih je već potpisano — dobit će još jedan potpis s pečatom (postojeći ostaje).";
+            poruka += "\n\n" + T($"{vecPotpisanih} od njih je već potpisano — dobit će još jedan potpis s pečatom (postojeći ostaje).", $"{vecPotpisanih} of them are already signed — they will get an additional signature with a stamp (the existing one stays).");
         if (!Certifikati.JeZaPotpis(cert))
-            poruka += "\n\nPAŽNJA: izabrani certifikat NIJE potpisni certifikat.";
+            poruka += "\n\n" + T("PAŽNJA: izabrani certifikat NIJE potpisni certifikat.", "WARNING: the selected certificate is NOT a signing certificate.");
         if (_post.VremenskiZig)
-            poruka += $"\nVremenski žig: {txtTsa.Text.Trim()} (traži internet)";
+            poruka += "\n" + T("Vremenski žig: ", "Time-stamp: ") + txtTsa.Text.Trim() + T(" (traži internet)", " (requires internet)");
         if (!PotvrdiPotpisivanje(poruka, indeksi.Select(i => _dokumenti[i].Putanja).ToList())) return;
 
         var op = new OpcijePotpisa
@@ -476,11 +501,11 @@ public sealed class GlavniProzor : Form
                 {
                     if (token.IsCancellationRequested) break;
                     var d = _dokumenti[i];
-                    Invoke(() => lblStatus.Text = "Potpisujem: " + Path.GetFileName(d.Putanja));
+                    Invoke(() => lblStatus.Text = T("Potpisujem: ", "Signing: ") + Path.GetFileName(d.Putanja));
                     var r = Obrada.PotpisiJedan(d.Putanja, korijen, nacin, backup, potpis, ime, op, lanac);
                     if (r.Uspjeh) ok++; else greske++;
                     rezultati.Add(r);
-                    log.Add($"{(r.Uspjeh ? "OK    " : "GREŠKA")} {Path.GetRelativePath(korijen, d.Putanja)} — {r.Poruka}");
+                    log.Add($"{(r.Uspjeh ? "OK    " : T("GREŠKA", "ERROR"))} {Path.GetRelativePath(korijen, d.Putanja)} — {r.Poruka}");
                     var novi = nacin == NacinSpremanja.ZamijeniOriginal && r.Uspjeh ? Provjera.Analiziraj(d.Putanja) : null;
                     Invoke(() =>
                     {
@@ -490,10 +515,10 @@ public sealed class GlavniProzor : Form
                         progres.Value++;
                     });
                     // ako token odbije (pogrešan PIN, izvađen), ne nastavljaj s ostalima
-                    if (!r.Uspjeh && (r.Poruka.StartsWith("certifikat/token") || r.Poruka.StartsWith("vremenski žig nije dobijen"))) break;
+                    if (!r.Uspjeh && r.Prekini) break;
                 }
             }
-            catch (Exception ex) { log.Add("GREŠKA: " + ex.Message); greske++; }
+            catch (Exception ex) { log.Add(T("GREŠKA: ", "ERROR: ") + ex.Message); greske++; }
             finally { gotovo.SetResult(); }
         });
         nit.SetApartmentState(ApartmentState.STA);
@@ -506,15 +531,15 @@ public sealed class GlavniProzor : Form
         btnStop.Enabled = false;
         AzurirajDugme();
         PrikaziIzabrani();
-        lblStatus.Text = $"Gotovo: potpisano {ok}, grešaka {greske}.";
+        lblStatus.Text = T($"Gotovo: potpisano {ok}, grešaka {greske}.", $"Done: {ok} signed, {greske} errors.");
 
         string dnevnik = null;
         try { dnevnik = Dnevnik.Upisi(korijen, cert, rezultati); } catch { }
-        string kraj = $"Potpisano: {ok}\nGrešaka: {greske}";
-        if (dnevnik != null) kraj += $"\n\nDnevnik potpisivanja:\n{dnevnik}";
-        if (nacin == NacinSpremanja.ZamijeniOriginal && ok > 0) kraj += $"\n\nOriginali su sačuvani u:\n{backup}";
-        if (nacin == NacinSpremanja.KopijaUPotpisano && ok > 0) kraj += $"\n\nPotpisane kopije su u:\n{Path.Combine(korijen, "_potpisano")}";
-        if (greske > 0) kraj += "\n\nDetalji grešaka:\n" + string.Join("\n", log.Where(l => !l.StartsWith("OK")).Take(15));
+        string kraj = T($"Potpisano: {ok}\nGrešaka: {greske}", $"Signed: {ok}\nErrors: {greske}");
+        if (dnevnik != null) kraj += "\n\n" + T("Dnevnik potpisivanja:", "Signing log:") + "\n" + dnevnik;
+        if (nacin == NacinSpremanja.ZamijeniOriginal && ok > 0) kraj += "\n\n" + T("Originali su sačuvani u:", "Originals were saved to:") + "\n" + backup;
+        if (nacin == NacinSpremanja.KopijaUPotpisano && ok > 0) kraj += "\n\n" + T("Potpisane kopije su u:", "Signed copies are in:") + "\n" + Path.Combine(korijen, "_potpisano");
+        if (greske > 0) kraj += "\n\n" + T("Detalji grešaka:", "Error details:") + "\n" + string.Join("\n", log.Where(l => !l.StartsWith("OK")).Take(15));
         MessageBox.Show(this, kraj, "Masovni PDF Potpis", MessageBoxButtons.OK, greske > 0 ? MessageBoxIcon.Warning : MessageBoxIcon.Information);
     }
 
@@ -522,21 +547,21 @@ public sealed class GlavniProzor : Form
     bool PotvrdiPotpisivanje(string poruka, List<string> fajlovi)
     {
         string spisak = string.Join("\n", fajlovi.Take(25).Select(Path.GetFileName));
-        if (fajlovi.Count > 25) spisak += $"\n… i još {fajlovi.Count - 25}";
+        if (fajlovi.Count > 25) spisak += "\n… " + T($"i još {fajlovi.Count - 25}", $"and {fajlovi.Count - 25} more");
         try
         {
-            var potpisi = new TaskDialogButton("Potpiši") { Enabled = false };
+            var potpisi = new TaskDialogButton(T("Potpiši", "Sign")) { Enabled = false };
             var odustani = TaskDialogButton.Cancel;
-            var izjava = new TaskDialogVerificationCheckBox("Pregledao/la sam ove dokumente i potpisujem ih svojom voljom.");
+            var izjava = new TaskDialogVerificationCheckBox(T("Pregledao/la sam ove dokumente i potpisujem ih svojom voljom.", "I have reviewed these documents and I sign them of my own free will."));
             izjava.CheckedChanged += (_, _) => potpisi.Enabled = izjava.Checked;
             var strana = new TaskDialogPage
             {
-                Caption = "Potvrda potpisivanja",
-                Heading = $"Potpisati {fajlovi.Count} dokument(a)?",
+                Caption = T("Potvrda potpisivanja", "Confirm signing"),
+                Heading = T($"Potpisati {fajlovi.Count} dokument(a)?", $"Sign {fajlovi.Count} document(s)?"),
                 Text = poruka,
                 Icon = TaskDialogIcon.ShieldBlueBar,
                 Verification = izjava,
-                Expander = new TaskDialogExpander(spisak) { CollapsedButtonText = "Prikaži dokumente", ExpandedButtonText = "Sakrij dokumente" },
+                Expander = new TaskDialogExpander(spisak) { CollapsedButtonText = T("Prikaži dokumente", "Show documents"), ExpandedButtonText = T("Sakrij dokumente", "Hide documents") },
                 Buttons = { potpisi, odustani },
                 DefaultButton = odustani,
                 AllowCancel = true
@@ -546,8 +571,8 @@ public sealed class GlavniProzor : Form
         catch
         {
             // ako TaskDialog nije dostupan
-            return MessageBox.Show(this, poruka + "\n\nPotvrđujem da sam pregledao/la dokumente i potpisujem ih svojom voljom.",
-                "Potvrda potpisivanja", MessageBoxButtons.OKCancel, MessageBoxIcon.Question) == DialogResult.OK;
+            return MessageBox.Show(this, poruka + "\n\n" + T("Potvrđujem da sam pregledao/la dokumente i potpisujem ih svojom voljom.", "I confirm that I have reviewed the documents and sign them of my own free will."),
+                T("Potvrda potpisivanja", "Confirm signing"), MessageBoxButtons.OKCancel, MessageBoxIcon.Question) == DialogResult.OK;
         }
     }
 }

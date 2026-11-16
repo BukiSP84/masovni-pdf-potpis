@@ -16,6 +16,7 @@ Napravljena za računovođe i firme u Bosni i Hercegovini koji svakodnevno potpi
 - **Dodavanje potpisa** – već potpisan dokument dobije dodatni potpis s pečatom, a postojeći potpisi ostaju važeći.
 - **Vremenski žig (opcija)** – uz potpis se ugradi vremenski žig (RFC 3161) i podatak o statusu certifikata (OCSP), pa je vrijeme potpisa dokazivo nezavisno od sata računara, a potpis provjerljiv i nakon isteka certifikata.
 - **Dnevnik potpisivanja** – svaki potpis se upisuje u `_dnevnik_potpisivanja.csv` u izabranom folderu (vrijeme, fajl, certifikat, Windows korisnik, SHA-256 otisak prije i poslije potpisa). Otvara se u Excelu.
+- **Jezik** – bosanski/hrvatski/srpski (latinica) ili engleski; automatski prema jeziku Windowsa ili ručno (*Jezik / Language* u gornjoj traci).
 - **Sigurno** – prije zamjene originala svaki potpisani fajl se provjeri; originali se čuvaju u `_backup_<datum>` (ili se potpisane kopije spremaju u `_potpisano`). Ako bilo šta ne uspije, original ostaje netaknut.
 
 ## Instalacija

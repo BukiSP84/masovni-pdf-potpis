@@ -41,6 +41,8 @@ public sealed class Postavke
     /// <summary>Dodaj vremenski žig (traži internet).</summary>
     public bool VremenskiZig { get; set; } = false;
     public string TsaUrl { get; set; } = ZadaniTsa;
+    /// <summary>"" = automatski (prema Windowsu), "bs" = BHS, "en" = English.</summary>
+    public string Jezik { get; set; } = "";
     public const string ZadaniTsa = "http://timestamp.digicert.com";
 
     static string Putanja =>
@@ -121,10 +123,10 @@ public sealed class InfoDokumenta
 
     public string StatusTekst => Status switch
     {
-        StatusDokumenta.Nepotpisan => "Nepotpisan",
-        StatusDokumenta.Potpisan => "Potpisan",
-        StatusDokumenta.PotpisanMijenjanPoslije => "Potpisan, mijenjan poslije",
-        StatusDokumenta.Neispravan => "NEISPRAVAN potpis",
-        _ => "Greška pri čitanju"
+        StatusDokumenta.Nepotpisan => Jezik.T("Nepotpisan", "Unsigned"),
+        StatusDokumenta.Potpisan => Jezik.T("Potpisan", "Signed"),
+        StatusDokumenta.PotpisanMijenjanPoslije => Jezik.T("Potpisan, mijenjan poslije", "Signed, modified later"),
+        StatusDokumenta.Neispravan => Jezik.T("NEISPRAVAN potpis", "INVALID signature"),
+        _ => Jezik.T("Greška pri čitanju", "Read error")
     };
 }

@@ -11,9 +11,12 @@ public static class Dnevnik
 {
     public const string ImeFajla = "_dnevnik_potpisivanja.csv";
 
-    static readonly string Zaglavlje = string.Join(";", "Vrijeme", "Fajl", "Rezultat", "Potpisnik", "Izdavač certifikata",
-        "Serijski broj certifikata", "Thumbprint", "Windows korisnik", "Računar", "Vremenski žig (TSA)",
-        "SHA-256 prije", "SHA-256 poslije", "Napomena");
+    static string Zaglavlje => Jezik.En
+        ? string.Join(";", "Time", "File", "Result", "Signer", "Certificate issuer", "Certificate serial number", "Thumbprint",
+            "Windows user", "Computer", "Time-stamp (TSA)", "SHA-256 before", "SHA-256 after", "Note")
+        : string.Join(";", "Vrijeme", "Fajl", "Rezultat", "Potpisnik", "Izdavač certifikata",
+            "Serijski broj certifikata", "Thumbprint", "Windows korisnik", "Računar", "Vremenski žig (TSA)",
+            "SHA-256 prije", "SHA-256 poslije", "Napomena");
 
     /// <summary>Dopisuje stavke; vraća putanju dnevnika (u folderu ili, ako nije moguće, u %APPDATA%).</summary>
     public static string Upisi(string korijen, X509Certificate2 cert, IEnumerable<RezultatFajla> stavke)
@@ -21,7 +24,7 @@ public static class Dnevnik
         var redovi = stavke.Select(r => string.Join(";",
             r.Vrijeme.ToString("yyyy-MM-dd HH:mm:ss"),
             Polje(Path.GetRelativePath(korijen, r.Putanja)),
-            r.Uspjeh ? "potpisano" : "greška",
+            r.Uspjeh ? Jezik.T("potpisano", "signed") : Jezik.T("greška", "error"),
             Polje(cert.GetNameInfo(X509NameType.SimpleName, false)),
             Polje(cert.GetNameInfo(X509NameType.SimpleName, true)),
             cert.SerialNumber,

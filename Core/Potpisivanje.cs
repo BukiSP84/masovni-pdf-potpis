@@ -29,7 +29,7 @@ public sealed class PotpisCertifikatom : IExternalSignature, IDisposable
     public PotpisCertifikatom(X509Certificate2 cert)
     {
         _cert = cert;
-        if (!cert.HasPrivateKey) throw new InvalidOperationException("Certifikat nema privatni ključ.");
+        if (!cert.HasPrivateKey) throw new InvalidOperationException(Jezik.T("Certifikat nema privatni ključ.", "The certificate has no private key."));
     }
 
     public string GetDigestAlgorithmName() => "SHA256";
@@ -161,8 +161,8 @@ public static class Certifikati
     {
         string ime = c.GetNameInfo(X509NameType.SimpleName, false);
         string izd = c.GetNameInfo(X509NameType.SimpleName, true);
-        string vrsta = JeZaPotpis(c) ? "potpisni" : "NIJE potpisni";
-        return $"{ime} — {izd} — {vrsta} — do {c.NotAfter:dd.MM.yyyy} — {c.Thumbprint[..8]}";
+        string vrsta = JeZaPotpis(c) ? Jezik.T("potpisni", "signing") : Jezik.T("NIJE potpisni", "NOT for signing");
+        return $"{ime} — {izd} — {vrsta} — {Jezik.T("do", "until")} {c.NotAfter:dd.MM.yyyy} — {c.Thumbprint[..8]}";
     }
 }
 
@@ -264,7 +264,7 @@ sealed class TsaKlijent : ITSAClient
         try { return _tsa.GetTimeStampToken(imprint); }
         catch (Exception ex)
         {
-            throw new VremenskiZigException($"vremenski žig nije dobijen od {_url} (provjeri internet i URL): {ex.Message}", ex);
+            throw new VremenskiZigException(Jezik.T($"vremenski žig nije dobijen od {_url} (provjeri internet i URL): ", $"no time-stamp received from {_url} (check the internet connection and URL): ") + ex.Message, ex);
         }
     }
 }
@@ -372,7 +372,7 @@ public static class Potpisnik
         var canvas = new iText.Kernel.Pdf.Canvas.PdfCanvas(str);
         float lijevo = zadnja.GetLeft() + 60, vrh = zadnja.GetTop() - 80;
         canvas.BeginText().SetFontAndSize(font, 14).MoveText(lijevo, vrh)
-              .ShowText("Elektronski potpis dokumenta").EndText();
+              .ShowText(Jezik.T("Elektronski potpis dokumenta", "Electronic signature of the document")).EndText();
         canvas.BeginText().SetFontAndSize(font, 9).MoveText(lijevo, vrh - 22)
               .ShowText(System.IO.Path.GetFileName(ulaz)).EndText();
         canvas.SetLineWidth(0.5f).MoveTo(lijevo, vrh - 32).LineTo(zadnja.GetRight() - 60, vrh - 32).Stroke();
