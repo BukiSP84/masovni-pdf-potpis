@@ -22,7 +22,7 @@ Napravljena za računovođe i firme u Bosni i Hercegovini koji svakodnevno potpi
    ```
    winget install Microsoft.DotNet.DesktopRuntime.8
    ```
-2. Preuzmi `MasovniPdfPotpis.zip` iz [Releases](../../releases), raspakuj i pokreni `MasovniPdfPotpis.exe`.
+2. Preuzmi `MasovniPdfPotpis.zip` iz [Releases](https://github.com/BukiSP84/masovni-pdf-potpis/releases), raspakuj i pokreni `MasovniPdfPotpis.exe`.
    Ako Windows prikaže „Windows protected your PC“: **More info → Run anyway**.
 3. Softver za tvoj token/karticu (npr. Halcom) mora biti instaliran – certifikat se mora vidjeti u Windowsu (`certmgr.msc` → Personal → Certificates).
 

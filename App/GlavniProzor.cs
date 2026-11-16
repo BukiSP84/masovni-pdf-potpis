@@ -36,7 +36,7 @@ public sealed class GlavniProzor : Form
     readonly ProgressBar progres = new() { Width = 260, Height = 20 };
     readonly Label lblStatus = new() { AutoSize = true, Margin = new Padding(6, 8, 3, 3) };
     readonly LinkLabel lnkOApp = new() { Text = "O aplikaciji", AutoSize = true, Margin = new Padding(12, 8, 3, 3) };
-    public const string IzvorniKodUrl = "https://github.com/";
+    public const string IzvorniKodUrl = "https://github.com/BukiSP84/masovni-pdf-potpis";
 
     string _pregledPutanja;       // fajl koji se prikazuje
     string _pregledTmp;           // privremeni fajl za "nova stranica"
