@@ -64,3 +64,16 @@ Copyright © 2026 Samir Perenda
 Ovaj program je slobodan softver pod licencom **GNU Affero General Public License v3.0** (vidi [LICENSE](LICENSE)). Program se daje **bez ikakve garancije**. Korisnik je odgovoran za provjeru potpisanih dokumenata.
 
 Korištene biblioteke i njihove licence: [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md). iText® je registrovani znak kompanije Apryse Group NV; ovaj projekat nije povezan s Apryse niti s Adobe.
+
+## Microsoft Store paket (MSIX)
+
+Manifest je u `Paket/AppxManifest.xml`. Paket se pravi od self-contained izdanja:
+
+```
+cd App
+dotnet publish -c Release -r win-x64 --self-contained true -o ../msix/app
+# u ../msix kopirati Paket/AppxManifest.xml i slike iz App/Resursi u ../msix/Images
+makeappx pack /d ../msix /p MasovniPdfPotpis.msix      # ili makemsix na Linuxu
+```
+
+Izjava o privatnosti: [PRIVACY.md](PRIVACY.md)
