@@ -237,6 +237,36 @@ public sealed class OpcijePotpisa
     public bool Vidljiv { get; set; } = true;
     public string Razlog { get; set; } = "";
     public string Lokacija { get; set; } = "";
+    /// <summary>URL servisa za vremenski žig (RFC 3161); prazno = bez vremenskog žiga.</summary>
+    public string TsaUrl { get; set; } = "";
+    /// <summary>Uz vremenski žig ugradi i OCSP odgovor (podatak da certifikat nije opozvan u trenutku potpisa).</summary>
+    public bool UgradiOpoziv { get; set; } = true;
+
+    public OpcijePotpisa Kopija() => (OpcijePotpisa)MemberwiseClone();
+}
+
+/// <summary>Greška pri dobijanju vremenskog žiga (nema interneta, pogrešan URL, servis ne radi).</summary>
+public sealed class VremenskiZigException : Exception
+{
+    public VremenskiZigException(string poruka, Exception inner) : base(poruka, inner) { }
+}
+
+/// <summary>Omotač oko iText TSA klijenta s jasnom porukom greške.</summary>
+sealed class TsaKlijent : ITSAClient
+{
+    readonly TSAClientBouncyCastle _tsa;
+    readonly string _url;
+    public TsaKlijent(string url) { _url = url; _tsa = new TSAClientBouncyCastle(url); }
+    public int GetTokenSizeEstimate() => _tsa.GetTokenSizeEstimate();
+    public iText.Commons.Digest.IMessageDigest GetMessageDigest() => _tsa.GetMessageDigest();
+    public byte[] GetTimeStampToken(byte[] imprint)
+    {
+        try { return _tsa.GetTimeStampToken(imprint); }
+        catch (Exception ex)
+        {
+            throw new VremenskiZigException($"vremenski žig nije dobijen od {_url} (provjeri internet i URL): {ex.Message}", ex);
+        }
+    }
 }
 
 public static class Potpisnik
@@ -298,7 +328,9 @@ public static class Potpisnik
                 }
 
                 signer.SetSignerProperties(props);
-                signer.SignDetached(new BouncyCastleDigest(), potpis, lanac, null, null, null, 0,
+                ITSAClient tsa = string.IsNullOrWhiteSpace(op.TsaUrl) ? null : new TsaKlijent(op.TsaUrl.Trim());
+                IOcspClient ocsp = tsa != null && op.UgradiOpoziv ? new OcspClientBouncyCastle() : null;
+                signer.SignDetached(new BouncyCastleDigest(), potpis, lanac, null, ocsp, tsa, 0,
                     PdfSigner.CryptoStandard.CMS);
             }
         }

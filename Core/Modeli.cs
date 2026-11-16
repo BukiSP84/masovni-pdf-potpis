@@ -38,6 +38,10 @@ public sealed class Postavke
     public bool Rekurzivno { get; set; } = true;
     public string Razlog { get; set; } = "";
     public string Lokacija { get; set; } = "";
+    /// <summary>Dodaj vremenski žig (traži internet).</summary>
+    public bool VremenskiZig { get; set; } = false;
+    public string TsaUrl { get; set; } = ZadaniTsa;
+    public const string ZadaniTsa = "http://timestamp.digicert.com";
 
     static string Putanja =>
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "MasovniPdfPotpis", "postavke.json");
@@ -91,6 +95,10 @@ public sealed class InfoPotpisa
     public int Stranica { get; set; }
     public string Greska { get; set; } = "";
     public DateTime? CertVaziDo { get; set; }
+    public DateTime? VremenskiZig { get; set; }       // vrijeme iz vremenskog žiga (TSA), ako postoji
+    public bool VremenskiZigIspravan { get; set; }
+    public bool ImaOcsp { get; set; }                 // ugrađen podatak o statusu certifikata
+    public string SerijskiBroj { get; set; } = "";
 }
 
 public enum StatusDokumenta

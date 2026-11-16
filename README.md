@@ -14,6 +14,8 @@ Napravljena za računovođe i firme u Bosni i Hercegovini koji svakodnevno potpi
 - **Mjesto pečata** – zadnja stranica, prva stranica ili **nova stranica na kraju** dokumenta.
 - **Masovno potpisivanje** – svi označeni dokumenti jednim klikom; PIN se unosi u prozoru drivera tokena.
 - **Dodavanje potpisa** – već potpisan dokument dobije dodatni potpis s pečatom, a postojeći potpisi ostaju važeći.
+- **Vremenski žig (opcija)** – uz potpis se ugradi vremenski žig (RFC 3161) i podatak o statusu certifikata (OCSP), pa je vrijeme potpisa dokazivo nezavisno od sata računara, a potpis provjerljiv i nakon isteka certifikata.
+- **Dnevnik potpisivanja** – svaki potpis se upisuje u `_dnevnik_potpisivanja.csv` u izabranom folderu (vrijeme, fajl, certifikat, Windows korisnik, SHA-256 otisak prije i poslije potpisa). Otvara se u Excelu.
 - **Sigurno** – prije zamjene originala svaki potpisani fajl se provjeri; originali se čuvaju u `_backup_<datum>` (ili se potpisane kopije spremaju u `_potpisano`). Ako bilo šta ne uspije, original ostaje netaknut.
 
 ## Instalacija
@@ -31,9 +33,27 @@ Napravljena za računovođe i firme u Bosni i Hercegovini koji svakodnevno potpi
 1. **Izaberi folder…** – lista PDF-ova sa statusom. Nepotpisani su automatski označeni.
 2. Klikni dokument → desno je pregled stranice. Klik/povlačenje = mjesto pečata.
 3. Izaberi **certifikat** (potpisni certifikat s namjenom *NonRepudiation* je ponuđen prvi) i **način spremanja**.
-4. **Potpiši označene** → unesi PIN kad driver zatraži.
+4. Po želji uključi **Vremenski žig** (traži internet).
+5. **Potpiši označene** → pregledaj spisak, označi izjavu „Pregledao/la sam ove dokumente i potpisujem ih svojom voljom“ → **Potpiši** → unesi PIN kad driver zatraži.
+
+### Vremenski žig
+
+Zadana adresa je `http://timestamp.digicert.com` – besplatan javni servis koji Adobe Reader prepoznaje. To **nije** kvalifikovani vremenski žig u smislu bh. propisa. Ako vaš izdavač certifikata (npr. Halcom, IDDEEA, BH Pošta) nudi uslugu vremenskog žiga, upišite njegovu adresu u polje pored opcije. Servisu se šalje samo kriptografski otisak (hash) dokumenta, nikad sam dokument.
 
 Postavke se čuvaju u `%APPDATA%\MasovniPdfPotpis\postavke.json`.
+
+## Pravna napomena
+
+Ovo nije pravni savjet. Ukratko, za korisnike u BiH:
+
+- Aplikacija pravi **elektronski potpis fizičkog lica** – vlasnika certifikata. To **nije elektronski pečat pravnog lica** (firme). Vidljivi „pečat“ na stranici je samo prikaz potpisa.
+- Punu pravnu snagu, jednaku vlastoručnom potpisu, u pravilu ima **kvalifikovani elektronski potpis** – certifikat ovlaštenog izdavača na tokenu ili kartici.
+- Potpisnik mora sam odlučiti o potpisu i imati sredstvo za potpis pod isključivom kontrolom. Zato aplikacija prije svakog potpisivanja prikazuje spisak dokumenata i traži izjavu potpisnika, a PIN unosi isključivo potpisnik u prozoru drivera. **Potpisuj samo dokumente koje si pregledao/la.** Nikad ne koristi tuđi certifikat.
+- **Nije namijenjena** aktima koji traže notarsku ili sudsku formu, vlastoručni potpis ili fizički pečat. Primjeri: promet nekretnina, bračni imovinski ugovori, registracijske prijave, otkupni blokovi, papirne knjige obrta. Za ugovore o radu, anekse i otkaze praksa nije ujednačena, pa je oprez preporučljiv.
+- Da li primalac (institucija, banka, druga strana) prihvata elektronski potpisan dokument, provjeri kod primaoca.
+- Potpisane dokumente **čuvaj u elektronskom obliku** (ispis na papir nije original), zajedno s dnevnikom potpisivanja. Za dugoročnu provjerljivost preporučuje se opcija **Vremenski žig**.
+
+Propisi se razlikuju između države, FBiH, RS i Brčko distrikta i mijenjaju se. Za konkretan slučaj pitaj stručnjaka.
 
 ## Da potpisi u Adobe Readeru budu „zeleni“
 

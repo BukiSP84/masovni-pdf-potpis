@@ -5,7 +5,7 @@
          IgnorableNamespaces="uap rescap">
   <Identity Name="SamPer84.MasovniPDFpotpis"
             Publisher="CN=D85E43DB-8FBD-4490-870E-AF11C1FCFD51"
-            Version="1.1.0.0"
+            Version="1.2.0.0"
             ProcessorArchitecture="x64" />
   <Properties>
     <DisplayName>Masovni PDF potpis</DisplayName>

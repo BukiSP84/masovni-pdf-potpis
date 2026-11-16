@@ -5,6 +5,10 @@ public sealed class RezultatFajla
     public string Putanja { get; set; } = "";
     public bool Uspjeh { get; set; }
     public string Poruka { get; set; } = "";
+    public DateTime Vrijeme { get; set; } = DateTime.Now;
+    public string HashPrije { get; set; } = "";
+    public string HashPoslije { get; set; } = "";
+    public DateTime? VremenskiZig { get; set; }
 }
 
 /// <summary>Pronalaženje PDF-ova i masovno potpisivanje s provjerom rezultata.</summary>
@@ -43,15 +47,13 @@ public static class Obrada
             if (prije.Status == StatusDokumenta.Greska)
                 throw new Exception("PDF se ne može pročitati: " + prije.Greska);
 
+            rez.HashPrije = Sha256(putanja);
             var opFajl = op;
             if (op.Mjesto == MjestoPecata.NovaStranica && prije.Potpisi.Count > 0)
             {
                 // u već potpisan PDF ne dodajemo stranicu (Adobe bi to javio kao izmjenu)
-                opFajl = new OpcijePotpisa
-                {
-                    Mjesto = MjestoPecata.ZadnjaStranica, Pecat = op.Pecat, PecatNovaStranica = op.PecatNovaStranica,
-                    Vidljiv = op.Vidljiv, Razlog = op.Razlog, Lokacija = op.Lokacija
-                };
+                opFajl = op.Kopija();
+                opFajl.Mjesto = MjestoPecata.ZadnjaStranica;
                 rez.Poruka = "već potpisan: pečat na zadnjoj stranici, bez nove stranice. ";
             }
 
@@ -65,6 +67,10 @@ public static class Obrada
                 throw new Exception("provjera potpisanog fajla nije prošla (" + poslije.StatusTekst + ")");
             if (prije.Potpisi.Count > 0 && poslije.Potpisi.Take(prije.Potpisi.Count).Any(p => !p.Ispravan))
                 throw new Exception("raniji potpis bi postao neispravan");
+            if (!string.IsNullOrWhiteSpace(op.TsaUrl) && (novi.VremenskiZig == null || !novi.VremenskiZigIspravan))
+                throw new Exception("vremenski žig nije ispravno ugrađen");
+            rez.HashPoslije = Sha256(tmp);
+            rez.VremenskiZig = novi.VremenskiZig;
 
             string rel = System.IO.Path.GetRelativePath(korijen, putanja);
             if (nacin == NacinSpremanja.ZamijeniOriginal)
@@ -97,8 +103,16 @@ public static class Obrada
         return rez;
     }
 
+    public static string Sha256(string putanja)
+    {
+        using var f = File.OpenRead(putanja);
+        return Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(f));
+    }
+
     static string Poruka(Exception ex)
     {
+        for (var x = ex; x != null; x = x.InnerException)
+            if (x is VremenskiZigException) return x.Message;
         var e = ex;
         while (e.InnerException != null) e = e.InnerException;
         if (e is System.Security.Cryptography.CryptographicException)

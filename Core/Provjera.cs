@@ -56,7 +56,16 @@ public static class Provjera
             var datum = pkcs7.GetSignDate();
             if (datum != DateTime.MinValue && datum.Year > 1900) p.Datum = datum.ToLocalTime();
 
+            if (pkcs7.IsTsp() == false && pkcs7.GetTimeStampTokenInfo() != null)
+            {
+                var ts = pkcs7.GetTimeStampDate();
+                if (ts != DateTime.MaxValue && ts.Year > 1900) p.VremenskiZig = ts.ToLocalTime();
+                try { p.VremenskiZigIspravan = pkcs7.VerifyTimestampImprint(); } catch { p.VremenskiZigIspravan = false; }
+            }
+            p.ImaOcsp = pkcs7.GetOcsp() != null;
+
             var cert = new X509Certificate2(pkcs7.GetSigningCertificate().GetEncoded());
+            p.SerijskiBroj = cert.SerialNumber;
             p.Potpisnik = cert.GetNameInfo(X509NameType.SimpleName, false);
             p.Izdavac = cert.GetNameInfo(X509NameType.SimpleName, true);
             p.Thumbprint = cert.Thumbprint;

@@ -10,7 +10,7 @@
     <LangVersion>latest</LangVersion>
     <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
     <ApplicationIcon>Resursi\ikona.ico</ApplicationIcon>
-    <Version>1.1.0</Version>
+    <Version>1.2.0</Version>
     <Product>Masovni PDF Potpis</Product>
     <Company>Samir Perenda</Company>
     <Copyright>Copyright (C) 2026 Samir Perenda</Copyright>
