@@ -1,0 +1,66 @@
+# Masovni PDF Potpis
+
+Besplatna Windows aplikacija za **masovno digitalno potpisivanje PDF dokumenata** kvalifikovanim elektronskim certifikatom (USB token, pametna kartica ili certifikat instaliran u Windows), s **vidljivim pečatom** u istom stilu kao Adobe Acrobat.
+
+Napravljena za računovođe i firme u Bosni i Hercegovini koji svakodnevno potpisuju veliki broj dokumenata (nalozi za knjiženje, platne liste, odluke…), ali radi s bilo kojim certifikatom koji Windows vidi.
+
+![ikona](App/Resursi/Square150x150Logo.png)
+
+## Šta radi
+
+- **Pregled foldera** – izabereš folder (s podfolderima) i odmah vidiš za svaki PDF: da li je potpisan, ko ga je potpisao, kada, kojim certifikatom, ima li vidljiv pečat i da li je dokument mijenjan nakon potpisa.
+- **Provjera potpisa** – kriptografska provjera svakog potpisa u dokumentu (ispravan / mijenjan / neispravan) i podaci o certifikatu (izdavač, namjena ključa, važenje).
+- **Pozicija pečata mišem** – na pregledu stranice klikneš gdje ide pečat (ili povučeš pravougaonik za veličinu); pozicija se pamti.
+- **Mjesto pečata** – zadnja stranica, prva stranica ili **nova stranica na kraju** dokumenta.
+- **Masovno potpisivanje** – svi označeni dokumenti jednim klikom; PIN se unosi u prozoru drivera tokena.
+- **Dodavanje potpisa** – već potpisan dokument dobije dodatni potpis s pečatom, a postojeći potpisi ostaju važeći.
+- **Sigurno** – prije zamjene originala svaki potpisani fajl se provjeri; originali se čuvaju u `_backup_<datum>` (ili se potpisane kopije spremaju u `_potpisano`). Ako bilo šta ne uspije, original ostaje netaknut.
+
+## Instalacija
+
+1. Instaliraj **.NET 8 Desktop Runtime** (jednom):
+   ```
+   winget install Microsoft.DotNet.DesktopRuntime.8
+   ```
+2. Preuzmi `MasovniPdfPotpis.zip` iz [Releases](../../releases), raspakuj i pokreni `MasovniPdfPotpis.exe`.
+   Ako Windows prikaže „Windows protected your PC“: **More info → Run anyway**.
+3. Softver za tvoj token/karticu (npr. Halcom) mora biti instaliran – certifikat se mora vidjeti u Windowsu (`certmgr.msc` → Personal → Certificates).
+
+## Upotreba
+
+1. **Izaberi folder…** – lista PDF-ova sa statusom. Nepotpisani su automatski označeni.
+2. Klikni dokument → desno je pregled stranice. Klik/povlačenje = mjesto pečata.
+3. Izaberi **certifikat** (potpisni certifikat s namjenom *NonRepudiation* je ponuđen prvi) i **način spremanja**.
+4. **Potpiši označene** → unesi PIN kad driver zatraži.
+
+Postavke se čuvaju u `%APPDATA%\MasovniPdfPotpis\postavke.json`.
+
+## Da potpisi u Adobe Readeru budu „zeleni“
+
+Adobe Reader → `Ctrl+K` → **Signatures** → *Verification* → **More…**:
+- uključi **Verify signatures when the document is opened**
+- pod **Windows Integration** uključi **Validating signatures** i **Validating certified documents**
+
+Tako Adobe vjeruje root certifikatima iz Windowsa (koje instalira softver izdavača certifikata).
+
+## Izgradnja iz izvornog koda
+
+Potreban je .NET 8 SDK.
+
+```
+cd App
+dotnet publish -c Release -r win-x64 --self-contained false -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true
+```
+
+Struktura:
+- `Core/` – potpisivanje (iText), izgled pečata, provjera potpisa, masovna obrada
+- `App/` – Windows Forms aplikacija (lista, pregled stranice, pozicija pečata)
+- `Test/` – konzolni test s `.pfx` certifikatom
+
+## Licenca
+
+Copyright © 2026 Samir Perenda
+
+Ovaj program je slobodan softver pod licencom **GNU Affero General Public License v3.0** (vidi [LICENSE](LICENSE)). Program se daje **bez ikakve garancije**. Korisnik je odgovoran za provjeru potpisanih dokumenata.
+
+Korištene biblioteke i njihove licence: [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md). iText® je registrovani znak kompanije Apryse Group NV; ovaj projekat nije povezan s Apryse niti s Adobe.
